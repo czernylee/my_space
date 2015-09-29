@@ -165,3 +165,53 @@ class Hair
     popMatrix();
   }
 }
+
+void mousePressed() {
+  c.loadPixels();
+  selectedColor=c.pixels[mouseY*width+mouseX];
+  c.updatePixels();
+}
+
+void keyPressed() {
+  if (key==ENTER) {
+    selected=!selected;
+  }
+}
+
+class Round {
+  Vec[] varray=new Vec[0];
+
+  void inputVec(Vec tempVec) {
+    varray=(Vec[])append(varray, tempVec);
+  }
+
+  void reset() {
+    varray=new Vec[0];
+  }
+
+  void shortest() {
+    float shortest=threshold;
+    int num=0;
+    for (int i=0; i<varray.length; i++) {
+      if (varray[i].d<shortest) {
+        shortest=varray[i].d;
+        num=i;
+      }
+    }
+    if(num!=0){
+    finalX=(int)(width+1-varray[num].x);
+    finalY=int(varray[num].y);
+  }}
+}
+
+class Vec {
+  int x=0;
+  int y=0;
+  float d=0;
+
+  Vec(int i1, int i2, float d1) {
+    x=i1;
+    y=i2;
+    d=d1;
+  }
+}
