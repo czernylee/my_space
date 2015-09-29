@@ -1,0 +1,103 @@
+//capitla letter and space blank is not considered
+
+import processing.video.*;
+
+String name="";
+boolean typed=false;
+int count=0;
+int at=0;
+Capture c;
+float highGrid=15;
+PFont font;
+PImage prev;
+PImage backgroundCopy;
+float threshold=10;
+
+float dist=0;
+float pr;
+float pg;
+float pb;
+float r;
+float g;
+float b;
+
+void setup() {
+  size(displayWidth, displayHeight, OPENGL);  
+  c=new Capture(this, width, height);
+  c.start();
+
+  font=loadFont("font.vlw");
+  textFont(font);
+
+  prev=createImage(width, height, RGB);
+  backgroundCopy=createImage(width, height, RGB);
+}
+
+void draw() {
+  if (typed) {
+    background(0);
+
+    if (c.available()) {
+      prev.copy(c, 0, 0, width, height, 0, 0, width, height);
+      prev.updatePixels();
+      c.read();
+    }
+    prev.loadPixels();
+    c.loadPixels();
+
+    at=0;
+    char temp=name.charAt(at);
+
+    for (float i=0; i<height; i+=highGrid) {
+      for (float j=0; j<width; j+=textWidth (temp)/1.6) {
+        int loc=int(i*width+j);
+        pr=red(prev.pixels[loc]);
+        pg=green(prev.pixels[loc]);
+        pb=blue(prev.pixels[loc]);
+        r=red(c.pixels[loc]);
+        g=green(c.pixels[loc]);
+        b=blue(c.pixels[loc]);
+
+        dist=dist(pr, pg, pb, r, g, b);
+
+        float bright=brightness(c.pixels[loc]);
+
+        textSize(constrain(map(bright, 0, 255, -20, 35), 5, 40));
+        temp=name.charAt(at);
+
+        if (dist>threshold)
+        {
+          fill(#3EF58E, 160);
+          text(temp, j, i, map(bright, 0, 255, -20, 40));
+          at=(at+1)%name.length();
+        }
+        if (map(brightness(c.pixels[int(j+i*width)]), 0, 255, 0.1, 70)<1)
+          textSize(1);
+      }
+    }
+  } else {
+    textAlign(CENTER);
+    background(0);
+    textSize(30);
+    String temp="Type your name : "+name;
+    text(temp, width/2, height/2);
+    if (count<30) {
+      text(" _", width/2+textWidth(temp)/2, height/2);
+    }
+
+    count=(count+1)%60;
+  }
+}
+
+void keyPressed() {
+  if (!typed) {
+    if (key==ENTER)
+      typed=!typed;
+    else if (key!=BACKSPACE)
+      name+=key;
+    else if (name.length()==0&&key==BACKSPACE) {
+    } else {
+      name=name.substring(0, name.length()-1);
+    }
+  }
+}
