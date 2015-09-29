@@ -1,0 +1,132 @@
+import processing.net.*;
+
+char[] alphabet= {
+  'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
+};
+alphaSphere[] s=new alphaSphere[0];
+
+float r=70;
+float crit=3*r;
+boolean ok=true;
+
+Server server;
+
+void setup() {
+  size(displayWidth, displayHeight, OPENGL);
+  server=new Server(this, 6724);
+  noStroke();
+  
+  colorMode(HSB,360,100,100);
+
+  for (int i=0; i<alphabet.length; i++) {
+    
+    ok=true;
+
+    float tempX=random(r+10, width-r-10);
+    float tempZ=random(-1500, -r);
+
+    for (int j=0; j<s.length; j++) {
+      
+      if(i==0)
+      break;
+      
+      float ox=abs(s[j].x);
+      float oz=abs(s[j].z);
+      
+      if (crit>dist(abs(tempX), abs(tempZ), ox, oz)) {
+        ok=false;
+        break;
+      }
+      
+    }
+    
+    if (ok==false) {
+      i--;
+      continue;
+    }
+
+    s=(alphaSphere[])append(s, new alphaSphere(alphabet[i], tempX, tempZ));
+    //println(s[i].x+", "+s[i].z);
+  }
+}
+
+void draw() {
+  background(0,0,100);
+  lights();
+  
+  if(server.available()!=null){
+    Client client=server.available();
+    String temp=client.readString();
+    temp=trim(temp);
+    temp.toLowerCase();
+    
+    for(int i=0; i<s.length; i++){
+      s[i].soar(temp);
+    }
+  }
+  
+  for (int i=0; i<alphabet.length; i++) {
+    s[i].pop();
+  }
+}
+
+//lightEffect
+
+class alphaSphere {
+  char ego;
+  float x;
+  float y;
+  float z;
+  float groundPower=0;
+  float groundPush=-55;
+  float gravity=5.5;
+  float ySpeed=0;
+  
+  color c=color(random(0,359),64,88);
+
+  
+
+  alphaSphere(char stn, float tx, float tz) {
+    ego=stn;
+    //x=random(r+10, width-r-10);R
+    x=tx;
+    //y=height-r;
+    y=height-r-random(100,300);
+    //z=random(-500, -r);
+    z=tz;
+  }
+  
+  void soar(String temp){
+    int count=0;
+    
+    for(int i=0; i<temp.length(); i++){
+      if(temp.charAt(i)==ego)
+      count++;
+    }
+    
+    groundPower=groundPush*count;
+  }
+
+  void pop() {
+    ySpeed+=gravity;
+
+    y=constrain(y+ySpeed, -30000, height-r);
+
+    if (y==height-r) {
+      ySpeed*=-0.8;
+    }
+
+    if (groundPower!=0 && y==height-r) {
+      ySpeed=constrain(ySpeed+groundPower,groundPush*2.5,0);
+      groundPower=0;
+    }
+    
+    fill(c);
+    
+    pushMatrix();
+    translate(x,y,z);
+    sphere(r);
+    popMatrix();
+  }
+  
+}
