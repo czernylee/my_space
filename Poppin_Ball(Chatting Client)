@@ -1,0 +1,44 @@
+import processing.net.*;
+
+//client
+String told="";
+String heard="";
+Client client;
+float back=0;
+
+void setup() {
+  client=new Client(this, "192.168.1.2", 6724);
+
+  size(300, 200);
+}
+
+void draw() {
+  background(back);
+  back=constrain(back+0.8, 0, 205);
+
+  textSize(15);
+  textAlign(LEFT);
+  text("_Client", 10, 20);
+  textAlign(CENTER);
+
+  textSize(20);
+  text(told, width/2, height/2+50);
+
+  text(heard, width/2, height/2-30);
+}
+
+void keyPressed() {
+  if (key==ENTER) {
+    client.write(told);
+    heard=told;
+    told="";
+    back=0;
+  } else if (key==BACKSPACE) {
+    if(told==""){
+      return;
+    }
+    told=told.substring(0, told.length()-1);
+  } else {
+    told+=key;
+  }
+}
