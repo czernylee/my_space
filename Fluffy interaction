@@ -1,0 +1,167 @@
+//must start command shift r !!!!!!!!!!
+
+import processing.video.*;
+
+int howMany = 16000;
+Hair[] list ;
+float radio;
+float rx = 0;
+float ry =0;
+
+float x_quake=0;
+float y_quake=0;
+
+boolean selected=false;
+color selectedColor=color(0, 0, 0);
+
+float threshold=27;
+
+int finalX=0;
+int finalY=0;
+
+Capture c;
+Round round;
+
+void quake(float tX, float tY) {
+  x_quake+=tX;
+  y_quake+=tY;
+}
+
+void setup() {
+  //size(1024, 768, P3D);
+  size(displayWidth, displayHeight, OPENGL);
+  colorMode(RGB);
+  radio = height/4.3;
+
+  round=new Round();
+
+  list = new Hair[howMany];
+  for (int i = 0; i < list.length; i++) {
+    list[i] = new Hair();
+  }
+  noiseDetail(3);
+
+  c=new Capture(this, width, height);
+  c.start();
+}
+
+void draw() {
+
+  if (selected) {
+    background(0);
+
+    float rxp = (finalX-(width/2)) * 0.005;
+    float ryp = -(finalY-(height/2)) * 0.005;
+
+    // float rxp = (mouseX-(width/2)) * 0.005;
+    // float ryp = -(mouseY-(height/2)) * 0.005;
+    rx = rx*0.9 + rxp*0.1;
+    ry = ry*0.9 + ryp*0.1;
+
+    translate(width/2, height/2);
+    fill(0);
+    noStroke();
+    sphere(radio);
+
+    for (int i = 0; i < list.length; i++) {
+      list[i].paint();
+    }
+
+    quake((ryp-ry)*0.1, (rxp-rx)*0.1);
+  } 
+
+    if (selected==false) {
+      noFill();
+      stroke(#FF0D15);
+    }
+    if (c.available()) {
+      c.read();
+    }
+    if (selected==false) {
+      image(c, 0, 0);
+    }
+    //println(finalX+", "+finalY);
+    c.loadPixels();
+
+
+    if (selectedColor!=color(0, 0, 0)) {
+
+      float r=red(selectedColor);
+      float g=green(selectedColor);
+      float b=blue(selectedColor);
+      for (int i=0; i<height; i++) {
+        for (int j=0; j<width; j++) {
+          int index=i*width+j;
+          color temp=c.pixels[index];
+
+          float tR=red(temp);
+          float tG=green(temp);
+          float tB=blue(temp);
+
+          float d=dist(r, g, b, tR, tG, tB);
+
+          if (d<threshold) {
+            if(selected==false){
+            ellipse(j, i, 30, 30);}
+            Vec tempVec=new Vec(j, i, d);
+            round.inputVec(tempVec);
+          }
+        }
+      }
+      round.shortest();
+      round.reset();
+    }
+    c.updatePixels();
+  
+}
+
+class Hair
+{
+  float z = random(-radio, radio);
+  float phi = random(TWO_PI);
+  float large = random(1.15, 1.2);
+  float theta = asin(z/radio);
+
+  Hair() { 
+    z = random(-radio, radio);
+    phi = random(TWO_PI);
+    large = random(1.15, 1.2);
+    theta = asin(z/radio);
+  }
+
+  void paint() {
+
+
+    float off = ( noise(millis() * 0.0005) -0.5) * 0.3;
+    float offb = ( noise(millis() * 0.0007) -0.5) * 0.3;
+
+    float thetaff = theta+off;
+    float phff = phi+offb;
+    float x = radio * cos(theta) * cos(phi);
+    float y = radio * sin(theta);
+    float z = radio * cos(theta) * sin(phi);
+
+    float xo = radio * cos(thetaff) * cos(phff);
+    float yo = radio * sin(thetaff);
+    float zo = radio * cos(thetaff) * sin(phff);
+
+    float xb = xo * large;
+    float yb = yo * large;
+    float zb = zo * large;
+
+    pushMatrix();
+
+    rotateX(x_quake);
+    rotateY(y_quake);
+
+    strokeWeight(1);
+    beginShape(LINES);
+    stroke(0);
+    vertex(x, y, z);
+    stroke(200, 130);
+    vertex(xb, yb, zb);
+    endShape();
+
+    popMatrix();
+  }
+}
